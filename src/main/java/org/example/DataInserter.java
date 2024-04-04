@@ -123,7 +123,7 @@ public class DataInserter {
     public static String IdGenerator(String table, Connection conn){
         int maxlength = 11; // For 1-9 random numbers
 
-        Random random = new Random(); // To ensure users can't predict and reverse engineer the data.
+        Random random = new Random(); // Initializing random so we can sue random.nextint().
         String generatedID;
         do {
             generatedID = String.valueOf(random.nextInt((int) Math.pow(10,maxlength)));
