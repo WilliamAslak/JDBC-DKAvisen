@@ -7,6 +7,7 @@ import java.sql.*;
 import static org.example.printStuff.*;
 import static org.example.DataInserter.insertReporter;
 import static org.example.DataInserter.insertPhoto;
+import static org.example.loadCSV.loadCSVtoSQL;
 
 public class Main {
 
@@ -27,14 +28,19 @@ public class Main {
 
                 Connection connection = DriverManager.getConnection(url, username, password);
 
-                //printAllTableInfo(connection);
+                printAllTableInfo(connection);
+
+                loadCSVtoSQL("uploads",connection);
+
+                //Address tempAddress = new Address("Abildgaardsvej", "139", "2830", "Virum");
+                //insertReporter("Barrack", "Obama", "CPR1624618", tempAddress, "25856499","WhiteHouse@gmail.com",connection);
+                //insertPhoto("VR gaming part 2", "2024-05-07", "P52", "CPR1624618",null,connection);
+
+                printSpecificTable("reporter",connection);
+                printSpecificTable("photo",connection);
 
 
 
-    //            Address tempAddress = new Address("Abildgaardsvej", "139", "2830", "Virum");
-  //              insertReporter("Barrack", "Obama", "CPR1624618", tempAddress, "25856499","WhiteHouse@gmail.com",connection);
-
-                printSpecificTable("address",connection);
 
                 connection.close();
             }

@@ -1,10 +1,12 @@
-package org.example.models; /**
+package org.example; /**
  * This class handles loading from a CSV data file.
  *
  * @author Giovanni Meroni
  * @author Thorbjørn Konstantinovitz
  *
  */
+
+import org.example.models.PhotoAndReporter;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;

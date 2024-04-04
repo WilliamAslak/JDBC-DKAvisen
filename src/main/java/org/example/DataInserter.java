@@ -1,28 +1,35 @@
 package org.example;
 import org.example.models.Address;
+import org.example.models.Photo;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Date;
+import java.text.SimpleDateFormat;
+
 import java.util.Random;
 
 public class DataInserter {
 
-    public static void insertPhoto(String title, String date, String photoId, String reporterCPR, String articleId, Connection conn) {
-        String sql = "INSERT INTO photo (Photo_Title, Photo_Date, Photo_id, Reporter_CPR, Article_id) VALUES (?, ?, ?, ?, ?)";
+    public static void insertPhoto(String title, Date date, String photoId, String reporterCPR, Connection conn) {
+        String sql = "INSERT INTO photo (Photo_Title, Photo_Date, Photo_id, Reporter_CPR) VALUES (?, ?, ?, ?)";
+        final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd");
+        //this is due to the fact that id is a kinda funky way to check uniqueness here.
+        if (!PhotoExists(title,dateFormatter.format(date), reporterCPR, conn)) {
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setString(1, title);
+                pstmt.setString(2, dateFormatter.format(date));
+                pstmt.setString(3, IdGenerator("Photo", conn));
+                pstmt.setString(4, reporterCPR);
+                pstmt.executeUpdate();
+                System.out.println("Successfully created photo " + title);
+            } catch (SQLException e) {
+                System.out.println(e.getMessage());
+            }
+        } else System.out.println("Duplicate entry for "+title);
 
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setString(1, title);
-            pstmt.setString(2, date);
-            pstmt.setString(3, photoId);
-            pstmt.setString(4, reporterCPR);
-            pstmt.setString(5, articleId);
-            pstmt.executeUpdate();
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
-        }
     }
 
     public static void insertReporter(String firstName, String lastName, String cpr, Address address, String phone, String email, Connection conn) {
@@ -37,10 +44,11 @@ public class DataInserter {
             pstmt.setString(5, phone);
             pstmt.setString(6, email);
             pstmt.executeUpdate();
+            System.out.println("Successfully created "+firstName + " " + lastName);
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
-        System.out.println("Successfully created "+firstName + " " + lastName);
+
     }
 
     public static void insertAddress(String street, String civic, String city, String zip, String country, String id, Connection conn) {
@@ -55,10 +63,11 @@ public class DataInserter {
             pstmt.setString(5, country);
             pstmt.setString(6, id);
             pstmt.executeUpdate();
+            System.out.println("Successfully created address with ID: "+id);
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
-        System.out.println("Successfully created address with ID: "+id);
+
     }
 
 
@@ -88,27 +97,39 @@ public class DataInserter {
 
         return generatedID;
     }
+    public static boolean PhotoExists(String title, String date, String reporterCPR, Connection conn){
+        String sql = "SELECT Photo_id FROM photo WHERE Photo_title = ? AND Photo_date = ? AND Reporter_CPR = ?";
 
+        try(PreparedStatement pstmt = conn.prepareStatement(sql)){
+
+            pstmt.setString(1, title);
+            pstmt.setString(2, date);
+            pstmt.setString(3, reporterCPR);
+
+            // Execute the query and check the result
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next();
+            }
+            // The address was not found, so we will put a new one into the database.
+        } catch (SQLException e) {
+            System.out.println("Database error: " + e.getMessage());
+        }
+        // If query failed default to false.
+        return false;
+    }
+
+
+    //Generates a unique id by getting a random number and then checking the sql database if the object with that id exists.
     public static String IdGenerator(String table, Connection conn){
-        String letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"; // Available characters to choose from
-        int maxlength = 9; // For 1-9 random numbers
+        int maxlength = 11; // For 1-9 random numbers
 
         Random random = new Random(); // To ensure users can't predict and reverse engineer the data.
-        String generatedString;
-
+        String generatedID;
         do {
-            StringBuilder builder = new StringBuilder();
-
-            // The format for ID should be "capital letter" followed by 1-9 random integers.
-            builder.append(letters.charAt(random.nextInt(letters.length()))); // Appends random char from letter string
-            // nextInt(9) will output a random number between 0-8, so +1 makes it 1-9
-            for(int i = 0; i < random.nextInt(maxlength)+1; i++)
-                builder.append(random.nextInt(10));
-            generatedString = builder.toString();
-            // possible idea is to implement a counter to ensure it doesnt run infinitely.
-        } while(IDExists(table, generatedString,conn));
+            generatedID = String.valueOf(random.nextInt((int) Math.pow(10,maxlength)));
+        } while(IDExists(table, generatedID,conn));
         // Once we reach this point that means it has found a unique id.
-        return generatedString;
+        return generatedID;
     }
 
     public static boolean IDExists(String table, String ID, Connection conn) {
