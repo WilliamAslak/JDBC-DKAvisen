@@ -48,7 +48,6 @@ public class DataInserter {
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
-
     }
 
     public static void insertAddress(String street, String civic, String city, String zip, String country, String id, Connection conn) {
